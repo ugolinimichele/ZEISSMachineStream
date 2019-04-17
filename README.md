@@ -22,9 +22,9 @@ To run the project locally:
 		dotnet run  
 
 	To run on Docker:  
-	- Build the Docker image
+	- Build the Docker image  
 		docker build  
-	- Run the image
+	- Run the image  
 		docker run  
   
 The DB used is an Azure CosmosDB with MongoDB API  
