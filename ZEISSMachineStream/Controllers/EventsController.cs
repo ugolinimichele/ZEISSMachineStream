@@ -42,16 +42,6 @@ namespace ZEISSMachineStream.Controllers
         /// <summary>
         /// Get the events applying the filters passed in query string (Optional)
         /// </summary>
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     {
-        ///        "machine_id": "db9eb448-214b-481f-96fe-d1b883ec11a7",
-        ///        "status": "idle,running"
-        ///        "limit": "50"
-        ///     }
-        ///
-        /// </remarks>
         /// <param name="filters">Optional. The available filter to apply. Check GetFilterSpecs for more info.</param>
         /// <returns>The list of the events with the applied filters</returns>
         /// <response code="200">The list is retrieved correctly applying the filters</response>

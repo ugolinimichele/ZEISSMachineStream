@@ -28,7 +28,7 @@ namespace IntegrationTests
                     Timestamp = timestamp.HasValue
                         ? timestamp.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
                         : DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffffffK"),
-                    Status = string.IsNullOrWhiteSpace(machineId)
+                    Status = string.IsNullOrWhiteSpace(status)
                         ? statuses.ToArray()[random.Next(statuses.Count())]
                         : status
                 },

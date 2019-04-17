@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Mongo2Go;
 using MongoDB.Driver;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -237,6 +238,140 @@ namespace FunctionalTests
             Assert.IsType<ApiNotFoundModel>(apiNotFoundModel);
 
             Assert.Null(apiNotFoundModel.CallParams);
+        }
+
+        [Fact]
+        public async Task GetByFiltersMachineId_OkResultAsync()
+        {
+            var clientAndSeed = CreateClientAndSeedData();
+
+            // The endpoint or route of the controller action.
+            var httpResponse = await clientAndSeed.testClient.GetAsync(
+                $"{baseEventControllerPath}GetByFilters?machine_id={clientAndSeed.machineId}&limit=5"
+            );
+
+            // Must be successful.
+            httpResponse.EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+
+            // Deserialize and examine results.
+            var stringResponse = await httpResponse.Content.ReadAsStringAsync();
+            var streamEvents = JsonConvert.DeserializeObject<IEnumerable<StreamEvent>>(stringResponse);
+
+            Assert.IsAssignableFrom<IEnumerable<StreamEvent>>(streamEvents);
+            Assert.IsAssignableFrom<IEnumerable<IStreamEvent>>(streamEvents);
+
+            Assert.Equal(5, streamEvents.Count());
+            Assert.True(streamEvents.All(x => x.Payload.MachineId == clientAndSeed.machineId));
+        }
+
+        [Fact]
+        public async Task GetByFiltersStatus_OkResultAsync()
+        {
+            var clientAndSeed = CreateClientAndSeedData();
+
+            // The endpoint or route of the controller action.
+            var httpResponse = await clientAndSeed.testClient.GetAsync(
+                $"{baseEventControllerPath}GetByFilters?status={clientAndSeed.status},running&limit=20"
+            );
+
+            // Must be successful.
+            httpResponse.EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+
+            // Deserialize and examine results.
+            var stringResponse = await httpResponse.Content.ReadAsStringAsync();
+            var streamEvents = JsonConvert.DeserializeObject<IEnumerable<StreamEvent>>(stringResponse);
+
+            Assert.IsAssignableFrom<IEnumerable<StreamEvent>>(streamEvents);
+            Assert.IsAssignableFrom<IEnumerable<IStreamEvent>>(streamEvents);
+
+            Assert.InRange(streamEvents.Count(), 10, 20);
+            Assert.Contains(clientAndSeed.status, streamEvents.Select(x => x.Payload.Status));
+        }
+
+        [Fact]
+        public async Task GetByFilters_NotFoundResultAsync()
+        {
+            // The endpoint or route of the controller action.
+            var httpResponse = await client.GetAsync(
+                $"{baseEventControllerPath}GetByFilters"
+            );
+
+            Assert.Equal(HttpStatusCode.NotFound, httpResponse.StatusCode);
+
+            // Deserialize and examine results.
+            var stringResponse = await httpResponse.Content.ReadAsStringAsync();
+            var apiNotFoundModel = JsonConvert.DeserializeObject<ApiNotFoundModel>(stringResponse);
+
+            Assert.IsType<ApiNotFoundModel>(apiNotFoundModel);
+            Assert.IsType<JObject>(apiNotFoundModel.CallParams);
+        }
+
+        [Fact]
+        public async Task GetByFiltersTimestampFrom_OkResultAsync()
+        {
+            var clientAndSeed = CreateClientAndSeedData();
+            var from = DateTime.UtcNow.AddMinutes(-5).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK");
+
+            // The endpoint or route of the controller action.
+            var httpResponse = await clientAndSeed.testClient.GetAsync(
+                $"{baseEventControllerPath}GetByFilters?from={from},running&limit=20"
+            );
+
+            // Must be successful.
+            httpResponse.EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+
+            // Deserialize and examine results.
+            var stringResponse = await httpResponse.Content.ReadAsStringAsync();
+            var streamEvents = JsonConvert.DeserializeObject<IEnumerable<StreamEvent>>(stringResponse);
+
+            Assert.IsAssignableFrom<IEnumerable<StreamEvent>>(streamEvents);
+            Assert.IsAssignableFrom<IEnumerable<IStreamEvent>>(streamEvents);
+
+            Assert.Equal(20, streamEvents.Count());
+            foreach (var streamEvent in streamEvents)
+            {
+                var dateTo = DateTime.Now;
+                var dateFrom = DateTime.Parse(from);
+                Assert.InRange(DateTime.Parse(streamEvent.Payload.Timestamp), dateFrom, dateTo);
+            }
+        }
+
+        [Fact]
+        public async Task GetByFiltersTimestampTo_OkResultAsync()
+        {
+            var clientAndSeed = CreateClientAndSeedData();
+            var to = DateTime.UtcNow.AddMinutes(-5).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK");
+
+            // The endpoint or route of the controller action.
+            var httpResponse = await clientAndSeed.testClient.GetAsync(
+                $"{baseEventControllerPath}GetByFilters?to={to},running&limit=20"
+            );
+
+            // Must be successful.
+            httpResponse.EnsureSuccessStatusCode();
+
+            Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
+
+            // Deserialize and examine results.
+            var stringResponse = await httpResponse.Content.ReadAsStringAsync();
+            var streamEvents = JsonConvert.DeserializeObject<IEnumerable<StreamEvent>>(stringResponse);
+
+            Assert.IsAssignableFrom<IEnumerable<StreamEvent>>(streamEvents);
+            Assert.IsAssignableFrom<IEnumerable<IStreamEvent>>(streamEvents);
+
+            Assert.Equal(10, streamEvents.Count());
+            foreach (var streamEvent in streamEvents)
+            {
+                var dateTo = DateTime.Parse(to);
+                var dateFrom = DateTime.Now.AddDays(-6);
+                Assert.InRange(DateTime.Parse(streamEvent.Payload.Timestamp), dateFrom, dateTo);
+            }
         }
 
         public void Dispose()
