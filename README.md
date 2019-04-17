@@ -23,9 +23,9 @@ To run the project locally:
 
 	To run on Docker:  
 	- Build the Docker image  
-		docker build  
+		docker build --tag=zeissmachinestream  
 	- Run the image  
-		docker run  
+		docker run -p 4001:80 zeissmachinestream  
   
 The DB used is an Azure CosmosDB with MongoDB API  
 The backgroud service listeing for the WebSocket is connected to ws://machinestream.herokuapp.com/ws  
